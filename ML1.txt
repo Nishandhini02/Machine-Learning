@@ -1,2 +1,39 @@
 create ML1.txt file 
-new text
+import numpy as np
+import matplotlib.pyplot as plt
+x=np.array([1,2,3,4,5])
+y=np.array([1,2,1.3,3.75,2.25])
+m=len(x)
+beta_0=0
+beta_1=0
+alpha=0.01
+iterations=1000
+def compute_cost(x,y,beta_0,beta_1):
+    predictions=beta_0+beta_1*x
+    cost=(1/(2*m))*np.sum((predictions-y)**2)
+    return cost
+def gradient_descent(x,y,beta_0,beta_1,alpha,iterations):
+    cost_history=[]
+    for _ in range(iterations):
+        grad_0=(-1/m)*np.sum(y-(beta_0+beta_1*x))
+        grad_1=(-1/m)*np.sum((y-(beta_0+beta_1*x))*x)
+        beta_0-=alpha*grad_0
+        beta_1-=alpha*grad_1
+        cost_history.append(compute_cost(x,y,beta_0,beta_1))
+    return beta_0,beta_1,cost_history
+beta_0,beta_1,cost_history=gradient_descent(x,y,beta_0,beta_1,alpha,iterations)
+print(f"optimized beta_0(intercept):{beta_0}")
+print(f"optimized beta_1(slope):{beta_1}")
+plt.plot(range(iterations),cost_history,color='blue')
+plt.xlabel('Iterations')
+plt.ylabel('Cost')
+plt.title('cost function history')
+plt.show()
+
+plt.scatter(x,y,color='red')
+plt.plot(x,beta_0+beta_1*x,color='green')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Linear regression')
+plt.show()
+#nisha
