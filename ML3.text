@@ -1,1 +1,41 @@
-this is text 3 
+#HMM
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from hmmlearn import hmm
+states=["Noun","Verb","Adjective"]
+n_states=len(states)
+observations=["dog","barks","happy","cat","runs","sad"]
+n_observation=len(observations)
+transition_probs=np.array([
+    [0.5,0.4,0.1],
+    [0.3,0.4,0.3],
+    [0.4,0.3,0.3]
+])
+emission_probs=np.array([
+    [0.5,0.1,0.1,0.3,0.0,0.0],
+    [0.0,0.6,0.0,0.0,0.4,0.0],
+    [0.0,0.0,0.5,0.0,0.0,0.5]
+])
+start_probs=np.array([0.6,0.3,0.1])
+model=hmm.CategoricalHMM(n_components=n_states,n_iter=100,random_state=42)
+model.startprob_=start_probs
+model.transmat_=transition_probs
+model.emissionprob_=emission_probs
+sequence=np.array([[0,1,2,3,4,5]])
+predicted_states=model.predict(sequence)
+predicted_tags=[states[state] for state in predicted_states]
+print("Observed sequence:dog barks happy cat runs sad")
+print("Predicted POS tags:",predicted_tags)
+plt.figure(figsize=(6,5))
+sns.heatmap(transition_probs,annot=True,cmap="Blues",xticklabels=states,yticklabels=states)
+plt.title("States Transition Matrix")
+plt.xlabel("To State")
+plt.ylabel("From State")
+plt.show()
+plt.figure(figsize=(8,5))
+sns.heatmap(emission_probs,annot=True,cmap="Greens",xticklabels=observations,yticklabels=states)
+plt.title("Emission Matrix")
+plt.xlabel("Observations(Words)")
+plt.ylabel("Hidden States(POS Tags)")
+plt.show()
