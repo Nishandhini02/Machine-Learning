@@ -1,8 +1,76 @@
-import numpy as np
+#Neural_network
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
 import matplotlib.pyplot as plt
-x=np.array([1,2,3,4,5])
-y=np.array([1,2,1.3,3.75,2.25])
-m=len(x)
-beta_0=0
-beta_1=0
-alpha=0.01
+import numpy as np
+# Load MNIST dataset
+(x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
+
+# Display sample images from the dataset
+fig, axes = plt.subplots(1, 5, figsize=(10, 3))
+for i, ax in enumerate(axes):
+    ax.imshow(x_train[i], cmap='gray')
+    ax.set_title(f"Label: {y_train[i]}")
+    ax.axis('off')
+plt.show()
+# Normalize pixel values to [0,1]
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
+# Reshape for neural network input
+x_train = x_train.reshape(-1, 28*28)
+x_test = x_test.reshape(-1, 28*28)
+
+# Convert labels to binary for Binary Cross-Entropy (odd vs. even classification)
+y_train_binary = (y_train % 2).astype(np.float32)
+y_test_binary = (y_test % 2).astype(np.float32)
+# Define a function to create a model with different activation and loss functions
+def create_model(activation='relu', loss_fn='sparse_categorical_crossentropy', binary=False):
+    model = keras.Sequential([
+        layers.Dense(128, activation=activation, input_shape=(28*28,)),
+        layers.Dense(64, activation=activation),
+        layers.Dense(1 if binary else 10, activation='sigmoid' if binary else 'softmax')  # Binary vs Multi-class
+    ])
+
+    model.compile(optimizer='adam', loss=loss_fn, metrics=['accuracy'])
+    return model
+
+# Define activation and loss function choices
+activation_functions = ['relu', 'sigmoid', 'tanh', 'softmax', 'leaky_relu']
+loss_functions = ['sparse_categorical_crossentropy', 'categorical_crossentropy', 'binary_crossentropy']
+
+# Training models with different activation and loss functions
+# Training models with different activation and loss functions
+history_results = {}
+activation_accuracy = {}
+for activation in activation_functions:
+    for loss_fn in loss_functions:
+        print(f"Training model with activation={activation} and loss={loss_fn}")
+        # Check if binary cross-entropy is used, apply binary classification
+        binary = loss_fn == 'binary_crossentropy'
+        model = create_model(activation, loss_fn, binary=binary)
+
+        # One-hot encode y_train and y_test if using categorical_crossentropy
+        if loss_fn == 'categorical_crossentropy':
+            y_train_encoded = tf.keras.utils.to_categorical(y_train, num_classes=10) # convert y_train to one-hot encoding
+            y_test_encoded = tf.keras.utils.to_categorical(y_test, num_classes=10) # convert y_test to one-hot encoding
+            history = model.fit(x_train, y_train_encoded, epochs=5, validation_data=(x_test,
+                                                                                     y_test_encoded), verbose=1)
+        else:
+            history = model.fit(x_train, y_train_binary if binary else y_train, epochs=5,
+                                validation_data=(x_test, y_test_binary if binary else y_test), verbose=1)
+
+        history_results[f"{activation}_{loss_fn}"] = history
+        activation_accuracy[activation] = history.history['val_accuracy'][-1]  # Store final accuracy
+# Instead of activation_loss_accuracy, use history_results to extract the data
+activation_loss_accuracy = {}
+for key, history in history_results.items():
+    activation_loss_accuracy[key] = history.history['val_accuracy'][-1]
+
+# Plot accuracy comparison per activation function
+plt.figure(figsize=(10, 6))
+plt.barh(list(activation_loss_accuracy.keys()), list(activation_loss_accuracy.values()), color='lightblue')
+plt.xlabel("Final Validation Accuracy")
+plt.ylabel("Activation Function & Loss Function")
+plt.title("Comparison of Activation & Loss Functions")
+plt.show()
